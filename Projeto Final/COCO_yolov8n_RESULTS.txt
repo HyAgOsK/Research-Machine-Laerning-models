@@ -1,0 +1,112 @@
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 313/313 [00:41<00:00,  7.48it/s]
+                   all       5000      36335      0.632      0.476      0.521      0.371
+                person       2693      10777      0.753      0.673      0.745      0.514
+               bicycle        149        314      0.684      0.392      0.457      0.264
+                   car        535       1918      0.645      0.516      0.562      0.364
+            motorcycle        159        367      0.711       0.58      0.657      0.414
+              airplane         97        143      0.815      0.768      0.832      0.653
+                   bus        189        283      0.746      0.643      0.738       0.62
+                 train        157        190      0.798      0.771      0.834      0.646
+                 truck        250        414      0.549        0.4      0.435      0.293
+                  boat        121        424      0.583      0.301      0.378      0.211
+         traffic light        191        634       0.64      0.345      0.409      0.211
+          fire hydrant         86        101      0.849      0.703      0.774      0.608
+             stop sign         69         75      0.695       0.64      0.692       0.63
+         parking meter         37         60      0.628        0.5      0.558      0.441
+                 bench        235        411      0.572       0.26      0.296      0.193
+                  bird        125        427      0.682      0.358      0.425      0.278
+                   cat        184        202      0.776      0.825      0.856      0.652
+                   dog        177        218      0.655      0.702      0.728      0.591
+                 horse        128        272      0.699      0.654      0.693      0.524
+                 sheep         65        354      0.607      0.667      0.662       0.46
+                   cow         87        372      0.698      0.602      0.682      0.487
+              elephant         89        252      0.701      0.833      0.821       0.63
+                  bear         49         71      0.846      0.775       0.84      0.689
+                 zebra         85        266      0.806      0.797      0.883      0.659
+               giraffe        101        232      0.858      0.832      0.885      0.683
+              backpack        228        371      0.494      0.158      0.198        0.1
+              umbrella        174        407      0.631      0.504      0.543       0.36
+               handbag        292        540      0.477      0.126      0.169     0.0849
+                   tie        145        252      0.684      0.361      0.429      0.269
+              suitcase        105        299      0.562      0.431      0.502      0.342
+               frisbee         84        115      0.747      0.774      0.767      0.584
+                  skis        120        241      0.605      0.324      0.366      0.188
+             snowboard         49         69       0.48      0.319      0.388      0.267
+           sports ball        169        260      0.708      0.438      0.474      0.328
+                  kite         91        327      0.604       0.52      0.558       0.38
+          baseball bat         97        145      0.584      0.386      0.403      0.216
+        baseball glove        100        148      0.668      0.473      0.512      0.302
+            skateboard        127        179      0.722      0.608      0.663      0.451
+             surfboard        149        267      0.622      0.472      0.507      0.309
+         tennis racket        167        225        0.7      0.618      0.671      0.398
+                bottle        379       1013       0.61      0.388      0.454      0.298
+            wine glass        110        341      0.658      0.352       0.42       0.27
+                   cup        390        895       0.58      0.444      0.488      0.351
+                  fork        155        215      0.584       0.32      0.389      0.264
+                 knife        181        325      0.501      0.164      0.174      0.106
+                 spoon        153        253      0.407      0.146       0.16     0.0986
+                  bowl        314        623      0.588      0.494      0.529       0.39
+                banana        103        370      0.546      0.319      0.374      0.233
+                 apple         76        236      0.413      0.242      0.227      0.157
+              sandwich         98        177       0.57      0.486      0.464      0.349
+                orange         85        285       0.44      0.419      0.369      0.281
+              broccoli         71        312      0.474       0.34      0.368      0.209
+                carrot         81        365      0.445      0.293      0.307      0.189
+               hot dog         51        125      0.759      0.432      0.497      0.364
+                 pizza        153        284      0.655      0.614      0.658      0.502
+                 donut         62        328      0.575      0.497      0.515      0.408
+                  cake        124        310      0.533      0.394      0.437      0.292
+                 chair        580       1771      0.581      0.342      0.403      0.257
+                 couch        195        261       0.59      0.552      0.586      0.435
+          potted plant        172        342      0.519      0.389      0.385      0.225
+                   bed        149        163       0.55      0.552       0.59      0.426
+          dining table        501        695      0.527       0.44      0.434      0.293
+                toilet        149        179       0.72      0.737      0.775      0.642
+                    tv        207        288      0.769      0.635      0.714      0.553
+                laptop        183        231      0.684      0.666      0.699       0.58
+                 mouse         88        106      0.628      0.653      0.707      0.526
+                remote        145        283      0.433      0.226      0.273      0.162
+              keyboard        106        153      0.592      0.601      0.649      0.482
+            cell phone        214        262      0.549      0.353      0.398      0.278
+             microwave         54         55      0.616      0.545      0.643      0.514
+                  oven        115        143      0.642      0.448      0.511      0.349
+               toaster          8          9      0.725      0.222      0.438      0.315
+                  sink        187        225      0.569      0.445      0.508      0.337
+          refrigerator        101        126      0.662      0.587       0.65      0.511
+                  book        230       1129      0.486      0.112      0.196     0.0967
+                 clock        204        267      0.749      0.607      0.667      0.456
+                  vase        137        274      0.588      0.453      0.453      0.321
+              scissors         28         36      0.688      0.333      0.332      0.278
+            teddy bear         94        190      0.669      0.558      0.604       0.42
+            hair drier          9         11          1          0    0.00493    0.00377
+            toothbrush         34         57      0.401      0.193      0.238      0.165
+Speed: 0.2ms preprocess, 2.6ms inference, 0.0ms loss, 0.9ms postprocess per image
+Saving runs/detect/val/predictions.json...
+
+Evaluating pycocotools mAP using runs/detect/val/predictions.json and /content/datasets/coco/annotations/instances_val2017.json...
+loading annotations into memory...
+Done (t=0.49s)
+creating index...
+index created!
+Loading and preparing results...
+DONE (t=2.42s)
+creating index...
+index created!
+Running per image evaluation...
+Evaluate annotation type *bbox*
+DONE (t=59.23s).
+Accumulating evaluation results...
+DONE (t=15.44s).
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.374
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.526
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.405
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.188
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.410
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.535
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.320
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.533
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.589
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.369
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.654
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.768
+Results saved to runs/detect/val
