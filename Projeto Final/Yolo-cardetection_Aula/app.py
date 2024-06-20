@@ -83,13 +83,64 @@ def draw_distance_line(scene, point1, point2, distance):
 def calculate_ema(previous_ema, current_value, alpha):
     return alpha * current_value + (1 - alpha) * previous_ema
 
+
+# Configuração do Streamlit
+st.title("Rastreador de tráfego em instituições de ensino")
+st.markdown("### Velocidade (km/h) e Distância (m)")
+
+# Adicionar ao início do script, antes de carregar o modelo
+uploaded_model_file = st.sidebar.file_uploader("Faça o upload do modelo YOLOv8 (.pt)", type=["pt"])
+if uploaded_model_file is not None:
+    with open("uploaded_model.pt", "wb") as f:
+        f.write(uploaded_model_file.getbuffer())
+    MODEL_NAME = "uploaded_model.pt"
+else:
+    MODEL_NAME = "yolov8n.pt"  # Modelo padrão
+
+# Adicionar ajuste de confiança na barra lateral
+CONFIDENCE_THRESHOLD = st.sidebar.slider("Ajuste a confiança do modelo", 0.0, 1.0, 0.3)
+
+source_type = st.sidebar.selectbox("Escolha a fonte do vídeo", ["Vídeo padrão", "Upload de vídeo", "Webcam"])
+
+if source_type == "Vídeo padrão":
+    video_source = SOURCE_VIDEO_PATH
+    video_info = sv.VideoInfo.from_video_path(video_path=video_source)
+    frame_generator = sv.get_video_frames_generator(source_path=video_source)
+elif source_type == "Upload de vídeo":
+    uploaded_file = st.sidebar.file_uploader("Faça o upload do seu vídeo", type=["mp4", "avi", "mov"])
+    if uploaded_file is not None:
+        video_source = uploaded_file.name
+        with open(video_source, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        video_info = sv.VideoInfo.from_video_path(video_path=video_source)
+        frame_generator = sv.get_video_frames_generator(source_path=video_source)
+    else:
+        st.stop()
+if source_type == "Webcam":
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        st.error("Erro ao acessar a webcam.")
+        st.stop()
+    
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    # Correção na inicialização do objeto VideoInfo
+    video_info = sv.VideoInfo(fps=fps, width=width, height=height)
+    
+    frame_generator = (cap.read()[1] for _ in iter(int, 1))
+
+else:
+    # Manter o resto do código inalterado para outras fontes de vídeo
+    video_info = sv.VideoInfo.from_video_path(video_path=video_source)
+    frame_generator = sv.get_video_frames_generator(source_path=video_source)
+
+
 view_transformer = ViewTransformer(source=SOURCE_MATRIX, target=TARGET_MATRIX)
 model = YOLO(MODEL_NAME)
 
 previous_ema = None
-
-video_info = sv.VideoInfo.from_video_path(video_path=SOURCE_VIDEO_PATH)
-frame_generator = sv.get_video_frames_generator(source_path=SOURCE_VIDEO_PATH)
 
 byte_track = sv.ByteTrack(
     frame_rate=video_info.fps, track_activation_threshold=CONFIDENCE_THRESHOLD
@@ -106,9 +157,8 @@ label_annotator = sv.LabelAnnotator(
 polygon_zone = sv.PolygonZone(polygon=SOURCE_MATRIX)
 coordinates = defaultdict(lambda: deque(maxlen=video_info.fps))
 
-# Configuração do Streamlit
-st.title("Rastreador de tráfego em instituições de ensino")
-st.markdown("### Velocidade (km/h) e Distância (m)")
+
+
 left_column, right_column = st.columns(2)
 video_placeholder = left_column.empty()
 chart_placeholder = right_column.empty()
