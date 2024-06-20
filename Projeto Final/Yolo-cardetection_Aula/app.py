@@ -19,7 +19,7 @@ IOU_THRESHOLD = 0.5
 MODEL_NAME = "yolov8n.pt"
 MODEL_RESOLUTION = 1280
 ALPHA = 0.5
-SPEED_THRESHOLD = 5  # Speed threshold in km/h to save frames
+SPEED_THRESHOLD = 25  # Speed threshold in km/h to save frames
 
 SOURCE_MATRIX = np.array([
     [578, 589],
@@ -137,10 +137,16 @@ time_window = 120
 # Armazenar a contagem de objetos e o tempo
 object_count_window = deque(maxlen=int(video_info.fps * time_window))
 time_start_window = time.time()
-
+frame_count = 0
 # Itera sobre os frames do video inicial
 start_time = time.time()
 for frame in tqdm(frame_generator, total=video_info.total_frames):
+    frame_count += 1
+    current_time = time.time()
+    # Calculate FPS
+    elapsed_time = current_time - start_time
+    fps = frame_count / elapsed_time if elapsed_time > 0 else 0
+
     result = model(frame, imgsz=MODEL_RESOLUTION, verbose=False)[0]
     detections = sv.Detections.from_ultralytics(result)
     detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
@@ -207,7 +213,9 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
             point2 = tuple(points[j])
             distance = calculate_euclidean_distance(transformed_points[i], transformed_points[j])
             annotated_frame = draw_distance_line(annotated_frame, point1, point2, distance)
-    
+    # Add FPS overlay
+    cv2.putText(annotated_frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
     # Atualiza o vídeo no Streamlit
     video_placeholder.image(annotated_frame, channels="BGR")
 
