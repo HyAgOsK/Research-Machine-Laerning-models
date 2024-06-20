@@ -200,7 +200,7 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
     result = model(frame, imgsz=MODEL_RESOLUTION, verbose=False)[0]
     detections = sv.Detections.from_ultralytics(result)
     detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
-    detections = detections[(detections.class_id == 0) | (detections.class_id == 2)]
+    detections = detections[detections.class_id != 0]
     detections = detections[polygon_zone.trigger(detections)]
     detections = detections.with_nms(IOU_THRESHOLD)
     detections = byte_track.update_with_detections(detections=detections)
