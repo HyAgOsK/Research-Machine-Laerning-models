@@ -34,7 +34,7 @@ CONFIDENCE_THRESHOLD = 0.3
 
 IOU_THRESHOLD = 0.5
 
-MODEL_NAME = "yolov8n.pt"
+MODEL_NAME = "./models/yolov8n_int8.tflite"
 
 MODEL_RESOLUTION = 1280
 
@@ -168,13 +168,13 @@ def calculate_ema(previous_ema, current_value, alpha):
 
 
 
-st.title("Rastreador de trÃ¡fego em instituiÃ§Ãµes de ensino")
+st.title("Rastreador de tráfego em instituições de ensino")
 
-st.markdown("### Velocidade (km/h) e DistÃ¢ncia (m)")
+st.markdown("### Velocidade (km/h) e Distância (m)")
 
 
 
-uploaded_model_file = st.sidebar.file_uploader("FaÃ§a o upload do modelo YOLOv8 (.pt ou .tflite)", type=["pt", "tflite"])
+uploaded_model_file = st.sidebar.file_uploader("Faça o upload do modelo YOLOv8 (.pt ou .tflite)", type=["pt", "tflite"])
 
 
 
@@ -216,15 +216,15 @@ else:
 
 # Adicionar ajuste de confianÃ§a na barra lateral
 
-CONFIDENCE_THRESHOLD = st.sidebar.slider("Ajuste a confianÃ§a do modelo", 0.0, 1.0, 0.3)
+CONFIDENCE_THRESHOLD = st.sidebar.slider("Ajuste a confiança do modelo", 0.0, 1.0, 0.3)
 
 
 
-source_type = st.sidebar.selectbox("Escolha a fonte do vÃ­deo", ["VÃ­deo padrÃ£o", "Upload de vÃ­deo", "Webcam"])
+source_type = st.sidebar.selectbox("Escolha a fonte do vídeo", ["vídeo padrão", "Upload de vídeo", "Webcam"])
 
 
 
-if source_type == "VÃ­deo padrÃ£o":
+if source_type == "vídeo padrão":
 
     video_source = SOURCE_VIDEO_PATH
 
@@ -232,9 +232,9 @@ if source_type == "VÃ­deo padrÃ£o":
 
     frame_generator = sv.get_video_frames_generator(source_path=video_source)
 
-elif source_type == "Upload de vÃ­deo":
+elif source_type == "Upload de vídeo":
 
-    uploaded_file = st.sidebar.file_uploader("FaÃ§a o upload do seu vÃ­deo", type=["mp4", "avi", "mov"])
+    uploaded_file = st.sidebar.file_uploader("FaÃ§a o upload do seu vídeo", type=["mp4", "avi", "mov"])
 
     if uploaded_file is not None:
 
@@ -362,7 +362,7 @@ line, = ax.plot([], [], label="Contagem de Objetos")
 
 ax.set_xlabel("Tempo (minutos)")
 
-ax.set_ylabel("NÃºmero de Objetos")
+ax.set_ylabel("Número de Objetos")
 
 ax.set_title("Fluxo de Objetos ao Longo do Tempo")
 
@@ -478,7 +478,13 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
 
                     smtp_port=PORT,
 
-                    email_message=f"Um veÃ­culo foi detectado a {int(speed)} km/h.",
+                    email_message=f"""Prezado,
+                    
+                                    Este e-mail é uma notificação!
+                                    
+                                    Um veículo foi detectado a {int(speed)} km/h.
+                                    
+                                    """,
 
                     subject="Excesso de velocidade", 
 
@@ -590,5 +596,4 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
 
 
 
-st.write("Processamento de vÃ­deo concluÃ­do!")
-
+st.write("Processamento de vídeo concluído!")
