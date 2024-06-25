@@ -193,9 +193,11 @@ if uploaded_model_file is not None:
         model = YOLO(MODEL_NAME)
 
     elif model_extension == 'tflite':
-
+        
+        MODEL_RESOLUTION = 1280
+        
         with open("uploaded_model.tflite", "wb") as f:
-
+            
             f.write(uploaded_model_file.getbuffer())
 
         MODEL_NAME = "uploaded_model.tflite"
