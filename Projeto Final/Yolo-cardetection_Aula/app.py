@@ -34,7 +34,7 @@ CONFIDENCE_THRESHOLD = 0.3
 
 IOU_THRESHOLD = 0.5
 
-MODEL_NAME = "./models/yolov8n_int8.tflite"
+MODEL_NAME = "./models/yolov8n_float32.tflite"
 
 MODEL_RESOLUTION = 1280
 
@@ -174,7 +174,7 @@ st.markdown("### Velocidade (km/h) e Distância (m)")
 
 
 
-uploaded_model_file = st.sidebar.file_uploader("Faça o upload do modelo YOLOv8 (.pt ou .tflite)", type=["pt", "tflite"])
+uploaded_model_file = st.sidebar.file_uploader("Faça o upload do modelo YOLOv8 (.pt ou .tflite)", type=["pt", "tflite", "engine"])
 
 
 
@@ -194,8 +194,6 @@ if uploaded_model_file is not None:
 
     elif model_extension == 'tflite':
 
-        MODEL_RESOLUTION = 640
-
         with open("uploaded_model.tflite", "wb") as f:
 
             f.write(uploaded_model_file.getbuffer())
@@ -203,10 +201,15 @@ if uploaded_model_file is not None:
         MODEL_NAME = "uploaded_model.tflite"
 
         model = YOLO(MODEL_NAME)
+    elif model_extension == 'engine':
+
+        with open("uploaded_model.engine", "wb") as f:
+
+            f.write(uploaded_model_file.getbuffer())
+
+        MODEL_NAME = "uploaded_model.engine"
 
 else:
-
-    MODEL_NAME = "yolov8n.pt"  
 
     model = YOLO(MODEL_NAME)
 
