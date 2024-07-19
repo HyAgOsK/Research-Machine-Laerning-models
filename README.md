@@ -1,5 +1,3 @@
-# Seminário FOMO - Faster Object More Objects 
-
 > FOMO
 
 -  Modelo de detecção de objetos restritos de autoria do EDGEIMPULSE, todo código, resultados e pesquisa estão presentes na apresentação acima.
@@ -10,4 +8,4 @@
 
 > Projeto Final
 
-- Aplicação de detecção rastreamento para segurança pública e institucional no INATEL, averiguando veículos, de acordo com suas velocidades e limites permitidos, e distâncias, caso ultrapasse a velocidade permitida, será enviado uma foto para e-mail responsável pela segurança do campos ou do meio, para avisar sobre o delito, e tomar a devidas providências. 
+- Aplicação de detecção rastreamento para segurança pública e institucional no INATEL, averiguando veículos, de acordo com suas velocidades e limites permitidos, e distâncias, caso ultrapasse a velocidade permitida, será enviado uma foto para e-mail responsável pela segurança do campos a placa do carro ou do meio, para avisar sobre o delito, e tomar a devidas providências. 

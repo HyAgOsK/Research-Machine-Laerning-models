@@ -28,13 +28,13 @@ st.set_page_config(layout="wide")
 
 
 
-SOURCE_VIDEO_PATH = "./data/sample_videos/videotest.mp4"
+SOURCE_VIDEO_PATH = "./data/sample_videos/testdistancia.mp4"
 
 CONFIDENCE_THRESHOLD = 0.3
 
 IOU_THRESHOLD = 0.5
 
-MODEL_NAME = "./models/yolov8n_float32.tflite"
+MODEL_NAME = "yolov8n.pt"
 
 MODEL_RESOLUTION = 1280
 
@@ -58,7 +58,7 @@ SOURCE_MATRIX = np.array([
 
 
 
-TARGET_WIDTH = 7
+TARGET_WIDTH = 7.60
 
 TARGET_HEIGHT = 31
 
@@ -107,8 +107,8 @@ class ViewTransformer:
         source = source.astype(np.float32)
 
         target = target.astype(np.float32)
-
-        self.H, _ = cv2.findHomography(source, target)
+        # aumentando a robustes da matriz
+        self.H, _ = cv2.findHomography(source, target,  cv2.RANSAC, 1.0)
 
 
 
@@ -193,11 +193,11 @@ if uploaded_model_file is not None:
         model = YOLO(MODEL_NAME)
 
     elif model_extension == 'tflite':
-        
-        MODEL_RESOLUTION = 1280
-        
+
+        MODEL_RESOLUTION = 224
+
         with open("uploaded_model.tflite", "wb") as f:
-            
+
             f.write(uploaded_model_file.getbuffer())
 
         MODEL_NAME = "uploaded_model.tflite"
@@ -223,7 +223,7 @@ else:
 
 CONFIDENCE_THRESHOLD = st.sidebar.slider("Ajuste a confiança do modelo", 0.0, 1.0, 0.3)
 
-
+previous_ema_dist_obj = None
 
 source_type = st.sidebar.selectbox("Escolha a fonte do vídeo", ["vídeo padrão", "Upload de vídeo", "Webcam"])
 
@@ -402,7 +402,7 @@ time_start_window = time.time()
 frame_count = 0
 
 # Itera sobre os frames do video inicial
-
+previous_ema_dist = None
 start_time = time.time()
 
 for frame in tqdm(frame_generator, total=video_info.total_frames):
@@ -425,7 +425,7 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
 
     detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
 
-    detections = detections[detections.class_id != 0]
+    detections = detections[detections.class_id == 0]
 
     detections = detections[polygon_zone.trigger(detections)]
 
@@ -460,9 +460,22 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
             distance = abs(coordinate_end - coordinate_start)
 
             time_interval = len(coordinates[tracker_id]) / video_info.fps
+            
+            #Aplicando MME na distância também 
+            if previous_ema_dist is None:
 
-            speed = distance / time_interval * 3.6
+                previous_ema_dist = distance
 
+                ema_speed_d = distance
+
+            else:
+
+                ema_speed_d = calculate_ema(previous_ema_dist, distance, ALPHA)
+
+                previous_ema_dist = ema_speed_d
+            
+            speed = previous_ema_dist / time_interval * 3.6
+            
             if speed >= SPEED_THRESHOLD:
 
                 image_path = f"id_{tracker_id}_velocidade_{int(speed)}.jpg"
@@ -555,7 +568,20 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
 
             distance = calculate_euclidean_distance(transformed_points[i], transformed_points[j])
 
-            annotated_frame = draw_distance_line(annotated_frame, point1, point2, distance)
+            #Aplicando MME na distância entre dois objetos
+            if previous_ema_dist_obj is None:
+
+                previous_ema_dist_obj = distance
+
+                ema_speed_dist_obj = distance
+
+            else:
+
+                ema_speed_dist_obj = calculate_ema(previous_ema_dist_obj, distance, ALPHA)
+
+                previous_ema_dist_obj = ema_speed_dist_obj
+
+            annotated_frame = draw_distance_line(annotated_frame, point1, point2, previous_ema_dist_obj)
 
     # Add FPS overlay
 
