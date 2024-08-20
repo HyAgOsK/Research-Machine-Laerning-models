@@ -16,18 +16,19 @@ import os
 from doctr.io import DocumentFile
 from doctr.models import ocr_predictor
 from inference_sdk import InferenceHTTPClient
+from utils.constants import (SENDER_ADDRESS, PORT, SMTP_SERVER_ADDRESS, SENDER_PASSWORD)
 
 # Configurar o modelo OCR
 ocr_model = ocr_predictor(pretrained=True)
 
-SENDER_ADDRESS = 'miltrutassk@gmail.com'
-PORT = '587'
-SMTP_SERVER_ADDRESS = 'smtp.gmail.com'
-SENDER_PASSWORD = 'brsa jkrt amxw bdbp'
+#SENDER_ADDRESS = 'miltrutassk@gmail.com'
+#PORT = '587'
+#SMTP_SERVER_ADDRESS = 'smtp.gmail.com'
+#SENDER_PASSWORD = 'brsa jkrt amxw bdbp'
 
 st.set_page_config(layout="wide")
 
-SOURCE_VIDEO_PATH = "./data/sample_videos/testplaca.mp4"
+SOURCE_VIDEO_PATH = "./data/sample_videos/Videotest_placa.mp4"
 CONFIDENCE_THRESHOLD = 0.3
 IOU_THRESHOLD = 0.5
 model_extension = 'pt'
