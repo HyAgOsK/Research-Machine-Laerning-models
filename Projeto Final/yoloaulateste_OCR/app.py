@@ -28,14 +28,14 @@ ocr_model = ocr_predictor(pretrained=True)
 
 st.set_page_config(layout="wide")
 
-SOURCE_VIDEO_PATH = "./data/sample_videos/Videotest_placa.mp4"
+SOURCE_VIDEO_PATH = "testetesteteste.mp4"
 CONFIDENCE_THRESHOLD = 0.3
 IOU_THRESHOLD = 0.5
 model_extension = 'pt'
 MODEL_NAME = "yolov8n.pt"
 MODEL_RESOLUTION = 1280
 ALPHA = 0.5
-SPEED_THRESHOLD = 5  # Speed threshold in km/h to save frames
+SPEED_THRESHOLD = 1005  # Speed threshold in km/h to save frames
 
 model_plate = YOLO('./models/license_plate_detector.pt')
 distance = 0
@@ -181,31 +181,43 @@ chart_placeholder = right_column.empty()
 
 timestamps = []
 object_counts = []
+speed_view_counts = []
 
-fig, ax = plt.subplots()
-line, = ax.plot([], [], label="Contagem de Objetos")
-ax.set_xlabel("Tempo (minutos)")
-ax.set_ylabel("Número de Objetos")
-ax.set_title("Fluxo de Objetos ao Longo do Tempo")
-ax.legend()
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15,2))
+line, = ax1.plot([], [], label="Contagem de Objetos")
+ax1.set_xlabel("Tempo (minutos)")
+ax1.set_ylabel("Número de Objetos")
+ax1.set_title("Fluxo de Objetos ao Longo do Tempo")
+ax1.legend()
 
-# Placeholder para o gráfico no Streamlit
+line2, = ax2.plot([], [], label="Velocidade dos Objetos (Km/h)")
+ax2.set_xlabel("Tempo (minutos)")
+ax2.set_ylabel("Velocidade dos Objetos")
+ax2.set_title("Velocidade vs Tempo (km/h)")
+ax2.legend()
+
 chart_placeholder = st.empty()
 
 def update_chart():
-    line.set_data(timestamps, object_counts)
-    ax.relim()
-    ax.autoscale_view()
-    chart_placeholder.pyplot(fig)
-
-time_window = 60
+    if len(timestamps) == len(object_counts) and len(timestamps) == len(speed_view_counts):
+        line.set_data(timestamps, object_counts)
+        line2.set_data(timestamps, speed_view_counts)
+        ax1.relim()
+        ax1.autoscale_view()
+        ax2.relim()
+        ax2.autoscale_view()
+        chart_placeholder.pyplot(fig)
+    else:
+        pass
+time_window = 1.0
 object_count_window = deque(maxlen=int(video_info.fps * time_window))
+object_count_speed = deque(maxlen=int(video_info.fps * time_window))
 time_start_window = time.time()
 frame_count = 0
 start_time = time.time()
 previous_ema_dist = None
+speed_view = [] 
 
-# Checkbox para habilitar/desabilitar a exibição do vídeo
 show_video = st.sidebar.checkbox("Mostrar vídeo", value=True)
 
 for frame in tqdm(frame_generator, total=video_info.total_frames):
@@ -236,6 +248,7 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
     for tracker_id in detections.tracker_id:
         if tracker_id not in coordinates or len(coordinates[tracker_id]) < video_info.fps / 2:
             labels.append(f"#{tracker_id}")
+            speed_view.append(0)
         else:
             coordinate_start = coordinates[tracker_id][0]
             coordinate_end = coordinates[tracker_id][-1]
@@ -250,24 +263,24 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
                 previous_ema_dist = ema_speed_d
 
             speed = previous_ema_dist / time_interval * 3.6
-
+            
             if previous_ema is None:
                 previous_ema = speed
                 ema_speed = speed
+                speed_view.append(0)
             else:
                 ema_speed = calculate_ema(previous_ema, speed, ALPHA)
                 previous_ema = ema_speed
+                speed_view.append(speed)
                 for tracker_id, bbox in zip(detections.tracker_id, detections.xyxy):
                     if previous_ema >= SPEED_THRESHOLD:
-                        #Cortando a imagem delimitado no bounding boxes
                         x1, y1, x2, y2 = map(int, bbox)
                         vehicle_crop = frame[y1:y2, x1:x2]
                         
                         image_path = f"id_{tracker_id}.jpg"
                         cv2.imwrite(image_path, vehicle_crop)
                         
-                        # Aplicar OCR na imagem recortada
-                        #verificar se tem results_plate
+      
                         single_img_doc = DocumentFile.from_images(image_path)
                         ocr_result = ocr_model(single_img_doc)
 
@@ -277,13 +290,6 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
                             for j, line in enumerate(block.lines):
                                 for k, word in enumerate(line.words):
                                     placa += word.value
-
-                        # tentar manter as detecções das placas ... 
-                        # CASO O ID FOR O MESMO         
-                        #if detections.tracker_id[-1] == tracker_id:
-                        #    pass
-                        #else:
-
 
                         send_email(
                             sender=SENDER_ADDRESS,
@@ -307,8 +313,10 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
                     placa = ''
                     if previous_ema_dist <= 0.9 and time_interval <= 1:
                         labels.append(f"#{tracker_id} {0} km/h")
+                        speed_view.append(0)
                     else:
                         labels.append(f"#{tracker_id} {int(ema_speed)} km/h")
+                        speed_view.append(ema_speed)
 
     num_detections = len(detections)
     num_labels = len(labels)
@@ -348,6 +356,9 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
         avg_object_count = np.mean(object_count_window)
         timestamps.append((current_time - start_time) / 60)
         object_counts.append(avg_object_count)
+
+        print('view speed',  speed_view[-1])
+        speed_view_counts.append(speed_view[-1])
         update_chart()
         time_start_window = current_time
         object_count_window.clear()
