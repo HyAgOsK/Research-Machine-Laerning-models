@@ -21,11 +21,6 @@ from utils.constants import (SENDER_ADDRESS, PORT, SMTP_SERVER_ADDRESS, SENDER_P
 # Configurar o modelo OCR
 ocr_model = ocr_predictor(pretrained=True)
 
-#SENDER_ADDRESS = 'miltrutassk@gmail.com'
-#PORT = '587'
-#SMTP_SERVER_ADDRESS = 'smtp.gmail.com'
-#SENDER_PASSWORD = 'brsa jkrt amxw bdbp'
-
 st.set_page_config(layout="wide")
 
 SOURCE_VIDEO_PATH = "testetesteteste.mp4"
