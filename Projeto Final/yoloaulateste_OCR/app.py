@@ -1,3 +1,14 @@
+from utils.helper import send_email
+from utils.constants import *
+from doctr.io import DocumentFile
+from doctr.models import ocr_predictor
+from utils.constants import (SENDER_ADDRESS, PORT, SMTP_SERVER_ADDRESS, SENDER_PASSWORD)
+from trasformerPoints import ViewTransformer 
+
+from functions import *
+from variables import *
+
+
 import streamlit as st
 import numpy as np
 import cv2
@@ -5,97 +16,15 @@ from ultralytics import YOLO
 import supervision as sv
 from collections import defaultdict, deque
 from tqdm import tqdm
-import math
 import time
 import matplotlib.pyplot as plt
-from utils.helper import send_email
-from utils.constants import *
 from deepsparse import Pipeline
 from deepsparse.yolo.schemas import YOLOInput
-import os
-from doctr.io import DocumentFile
-from doctr.models import ocr_predictor
 from inference_sdk import InferenceHTTPClient
-from utils.constants import (SENDER_ADDRESS, PORT, SMTP_SERVER_ADDRESS, SENDER_PASSWORD)
+from concurrent.futures import ThreadPoolExecutor
 
-# Configurar o modelo OCR
 ocr_model = ocr_predictor(pretrained=True)
-
 st.set_page_config(layout="wide")
-
-SOURCE_VIDEO_PATH = "testetesteteste.mp4"
-CONFIDENCE_THRESHOLD = 0.3
-IOU_THRESHOLD = 0.5
-model_extension = 'pt'
-MODEL_NAME = "yolov8n.pt"
-MODEL_RESOLUTION = 1280
-ALPHA = 0.5
-SPEED_THRESHOLD = 1005  # Speed threshold in km/h to save frames
-
-model_plate = YOLO('./models/license_plate_detector.pt')
-distance = 0
-SOURCE_MATRIX = np.array([
-    [578, 589],
-    [931, 589],
-    [1484, 895],
-    [200, 895]
-])
-
-TARGET_WIDTH = 7.60
-TARGET_HEIGHT = 31
-
-TARGET_MATRIX = np.array([
-    [0, 0],
-    [TARGET_WIDTH - 1, 0],
-    [TARGET_WIDTH - 1, TARGET_HEIGHT - 1],
-    [0, TARGET_HEIGHT - 1],
-])
-
-class ViewTransformer:
-    def __init__(self, source: np.ndarray, target: np.ndarray) -> None:
-        self.M = None
-        self.H = None
-        self.perspectiveTransform(source, target)
-        self.homographyTransform(source, target)
-
-    def perspectiveTransform(self, source: np.ndarray, target: np.ndarray) -> None:
-        source = source.astype(np.float32)
-        target = target.astype(np.float32)
-        self.M = cv2.getPerspectiveTransform(source, target)
-
-    def homographyTransform(self, source: np.ndarray, target: np.ndarray) -> None:
-        source = source.astype(np.float32)
-        target = target.astype(np.float32)
-        self.H, _ = cv2.findHomography(source, target, cv2.RANSAC, 1.0)
-
-    def transformPointsPerspective(self, points: np.ndarray) -> np.ndarray:
-        if points.size == 0 or self.M is None:
-            return points
-        reshaped_points = points.reshape(-1, 1, 2).astype(np.float32)
-        transformed_points = cv2.perspectiveTransform(reshaped_points, self.M)
-        return transformed_points.reshape(-1, 2)
-
-    def transformPointsHomography(self, points: np.ndarray) -> np.ndarray:
-        if points.size == 0 or self.H is None:
-            return points
-        reshaped_points = points.reshape(-1, 1, 2).astype(np.float32)
-        transformed_points = cv2.perspectiveTransform(reshaped_points, self.H)
-        return transformed_points.reshape(-1, 2)
-
-def calculate_euclidean_distance(point1, point2):
-    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-
-def draw_distance_line(scene, point1, point2, distance):
-    point1 = tuple(np.round(point1).astype(int))
-    point2 = tuple(np.round(point2).astype(int))
-    cv2.line(scene, point1, point2, (0, 255, 0), 2)
-    text_position = ((point1[0] + point2[0]) // 2, (point1[1] + point2[1]) // 2)
-    cv2.putText(scene, f"{distance:.2f} m", text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 4)
-    return scene
-
-def calculate_ema(previous_ema, current_value, alpha):
-    return alpha * current_value + (1 - alpha) * previous_ema
-
 st.title("Rastreador de tráfego em instituições de ensino")
 st.markdown("### Velocidade (km/h) e Distância (m)")
 
@@ -204,6 +133,69 @@ def update_chart():
         chart_placeholder.pyplot(fig)
     else:
         pass
+
+
+def process_ocr_and_send_email(image_path, previous_ema, previous_ema_dist):
+        ocr_model = ocr_predictor(pretrained=True) 
+        single_img_doc = DocumentFile.from_images(image_path)
+        ocr_result = ocr_model(single_img_doc)
+
+        placa = ''
+        for _, block in enumerate(ocr_result.pages[0].blocks):
+            for _, line in enumerate(block.lines):
+                for _, word in enumerate(line.words):
+                    placa += word.value
+        send_email(
+            sender=SENDER_ADDRESS,
+            password=SENDER_PASSWORD,
+            receiver="hyago.silva@mtel.inatel.br",
+            smtp_server=SMTP_SERVER_ADDRESS,
+            smtp_port=PORT,
+            email_message=f"""Prezado,
+                            Este e-mail é uma notificação!
+
+                            Um veículo foi detectado a {int(previous_ema)} km/h
+                            
+                            A distância desse veículo para os demais objetos ao redor é de {float(previous_ema_dist).__format__('.2f')} metros.
+                            A placa do carro é provavelmente:
+                            
+                            {placa}.
+                            """,
+            subject="Excesso de velocidade",
+            attachment_path=image_path
+        )
+
+
+
+
+processed_ids = set() 
+frames_captured = defaultdict(int)
+
+def OCR_data_model(tracker_id, detections, previous_ema, previous_ema_dist):
+    processed_ids.add(tracker_id)
+    for tracker_id, bbox in zip(detections.tracker_id, detections.xyxy):
+        if tracker_id not in processed_ids:
+            if previous_ema >= SPEED_THRESHOLD and frames_captured[tracker_id] < 2:
+                x1, y1, x2, y2 = map(int, bbox)
+                vehicle_crop = frame[y1:y2, x1:x2]
+                image_path = f"id_{tracker_id}.jpg"
+                cv2.imwrite(image_path, vehicle_crop)
+                frames_captured[tracker_id] += 1  
+                processed_ids.add(tracker_id)
+                executor.submit(process_ocr_and_send_email, image_path, previous_ema, previous_ema_dist)
+                
+                
+
+            if previous_ema_dist <= 0.9 and time_interval <= 1:
+                labels.append(f"#{tracker_id} {0} km/h")
+                speed_view.append(0)
+            else:
+                labels.append(f"#{tracker_id} {int(ema_speed)} km/h")
+                speed_view.append(ema_speed)
+
+executor = ThreadPoolExecutor(max_workers=4)
+            
+
 time_window = 1.0
 object_count_window = deque(maxlen=int(video_info.fps * time_window))
 object_count_speed = deque(maxlen=int(video_info.fps * time_window))
@@ -267,51 +259,9 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
                 ema_speed = calculate_ema(previous_ema, speed, ALPHA)
                 previous_ema = ema_speed
                 speed_view.append(speed)
-                for tracker_id, bbox in zip(detections.tracker_id, detections.xyxy):
-                    if previous_ema >= SPEED_THRESHOLD:
-                        x1, y1, x2, y2 = map(int, bbox)
-                        vehicle_crop = frame[y1:y2, x1:x2]
-                        
-                        image_path = f"id_{tracker_id}.jpg"
-                        cv2.imwrite(image_path, vehicle_crop)
-                        
-      
-                        single_img_doc = DocumentFile.from_images(image_path)
-                        ocr_result = ocr_model(single_img_doc)
+            #FUNÇÃO
+            OCR_data_model(tracker_id, detections, previous_ema, previous_ema_dist)
 
-
-                        placa = ''
-                        for i, block in enumerate(ocr_result.pages[0].blocks):
-                            for j, line in enumerate(block.lines):
-                                for k, word in enumerate(line.words):
-                                    placa += word.value
-
-                        send_email(
-                            sender=SENDER_ADDRESS,
-                            password=SENDER_PASSWORD,
-                            receiver="hyago.silva@mtel.inatel.br",
-                            smtp_server=SMTP_SERVER_ADDRESS,
-                            smtp_port=PORT,
-                            email_message=f"""Prezado,
-                                            Este e-mail é uma notificação!
-
-                                            Um veículo foi detectado a {int(speed)} km/h
-                                            
-                                            A distância desse veículo para os demais objetos ao redor é de {float(distance)}
-                                            A placa do carro é provavelmente:
-                                            
-                                            {placa}.
-                                            """,
-                            subject="Excesso de velocidade",
-                            attachment_path=image_path
-                        )
-                    placa = ''
-                    if previous_ema_dist <= 0.9 and time_interval <= 1:
-                        labels.append(f"#{tracker_id} {0} km/h")
-                        speed_view.append(0)
-                    else:
-                        labels.append(f"#{tracker_id} {int(ema_speed)} km/h")
-                        speed_view.append(ema_speed)
 
     num_detections = len(detections)
     num_labels = len(labels)
@@ -351,8 +301,7 @@ for frame in tqdm(frame_generator, total=video_info.total_frames):
         avg_object_count = np.mean(object_count_window)
         timestamps.append((current_time - start_time) / 60)
         object_counts.append(avg_object_count)
-
-        print('view speed',  speed_view[-1])
+        #velocidade atual de um certo objeto
         speed_view_counts.append(speed_view[-1])
         update_chart()
         time_start_window = current_time
